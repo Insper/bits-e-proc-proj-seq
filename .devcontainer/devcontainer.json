@@ -1,4 +1,13 @@
 {
   "image": "rafaelcorsi/bits",
-  "postCreateCommand": "pip3 install --user -r requirements-docker.txt"
+  "postCreateCommand": "pip3 install --user -r requirements-docker.txt",
+
+  "customizations": {
+		"vscode": {
+			"settings": {},
+			"extensions": [ "ms-python.python",
+                      "hediet.vscode-drawio",
+                      "wavetrace.wavetrace"],
+		}
+  }
 }
