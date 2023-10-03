@@ -1,5 +1,5 @@
 telemetry:
   ip: http://3.83.45.177
   course: 23b-bits
-  exercise-id: proj-1-comb
-  tags: comb
+  exercise-id: proj-3-seq
+  tags: seq

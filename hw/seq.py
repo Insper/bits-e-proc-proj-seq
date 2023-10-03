@@ -78,30 +78,30 @@ def ram(dout, din, addr, we, clk, rst, width, depth):
     return instances()
 
 
-# ---------- A ------------
+# ---------- fifo example ------------
 
 
 @block
 def fifo(dout, din, we, re, empty, full, clk, rst, width, depth):
+    mem = [Signal(modbv(0)[width:]) for _ in range(depth)]
+    w_addr = Signal(modbv(0)[21:])
+    r_addr = Signal(modbv(0)[21:])
+    count = Signal(modbv(0)[21:])
+
     @always_seq(clk.posedge, reset=rst)
     def seq():
-        pass
+        if we and not full:
+            mem[w_addr].next = din
+            w_addr.next = (w_addr + 1) % depth  # para fazer um buffer circular
+            count.next = count + 1
+
+        if re and not empty:
+            r_addr.next = (r_addr + 1) % depth  # para fazer um buffer circular
+            count.next = count - 1
 
     @always_comb
     def comb():
-        pass
-
-    return instances()
-
-
-@block
-def lifo(dout, din, we, re, empty, full, clk, rst, width, depth):
-    @always_seq(clk.posedge, reset=rst)
-    def seq():
-        pass
-
-    @always_comb
-    def comb():
-        pass
+        empty.next = addr == 0 and not we
+        full.next = addr == depth - 1
 
     return instances()

@@ -33,7 +33,7 @@ def test_ram():
     addr = Signal(modbv(0)[DEPTH:])
     we, clk = [Signal(bool(0)) for i in range(2)]
     rst = ResetSignal(0, active=1, isasync=True)
-    dut = ram(dout, din, addr, we, clk, rst, WIDTH, DEPTH)
+    ram_inst = ram(dout, din, addr, we, clk, rst, WIDTH, DEPTH)
 
     @always(delay(1))
     def clkgen():
@@ -53,8 +53,8 @@ def test_ram():
             yield clk.negedge
             assert addr == i
 
-    sim = Simulation(dut, [stimulus, clkgen])
-    traceSignals(dut)
+    sim = Simulation(ram_inst, [stimulus, clkgen])
+    traceSignals(ram_inst)
     sim.run(20)
 
 
@@ -64,7 +64,7 @@ def test_pc():
     i, output = [Signal(modbv(0)[WIDTH:]) for i in range(2)]
     inc, load, clk = [Signal(bool(0)) for i in range(3)]
     rst = ResetSignal(0, active=1, isasync=True)
-    dut = pc(inc, load, i, output, WIDTH, clk, rst)
+    pc_inst = pc(inc, load, i, output, WIDTH, clk, rst)
 
     @always(delay(10))
     def clkgen():
@@ -97,8 +97,8 @@ def test_pc():
         yield clk.negedge
         assert output == 33
 
-    sim = Simulation(dut, [stimulus, clkgen])
-    traceSignals(dut)
+    sim = Simulation(pc_inst, [stimulus, clkgen])
+    traceSignals(pc_inst)
     sim.run(500)
     sim.quit()
 
@@ -109,7 +109,7 @@ def test_registerN():
     i, output = [Signal(modbv(0)[N:]) for n in range(2)]
     load, clk = [Signal(bool(0)) for n in range(2)]
     rst = ResetSignal(0, active=1, isasync=True)
-    dut = registerN(i, load, output, N, clk, rst)
+    regN_inst = registerN(i, load, output, N, clk, rst)
 
     @always(delay(10))
     def clkgen():
@@ -126,7 +126,8 @@ def test_registerN():
             load.next = 0
             assert i == output
 
-    sim = Simulation(dut, [stimulus, clkgen])
+    sim = Simulation(regN_inst, [stimulus, clkgen])
+    traceSignals(regN_inst)
     sim.run(20)
 
 
@@ -135,7 +136,7 @@ def test_register8():
     i, output = [Signal(modbv(0)[8:]) for i in range(2)]
     load, clk = [Signal(bool(0)) for i in range(2)]
     rst = ResetSignal(0, active=1, isasync=True)
-    dut = register8(i, load, output, clk, rst)
+    reg8_inst = register8(i, load, output, clk, rst)
 
     @always(delay(10))
     def clkgen():
@@ -152,7 +153,8 @@ def test_register8():
             load.next = 0
             assert i == output
 
-    sim = Simulation(dut, [stimulus, clkgen])
+    sim = Simulation(reg8_inst, [stimulus, clkgen])
+    traceSignals(reg8_inst)
     sim.run(200)
 
 
@@ -160,7 +162,7 @@ def test_register8():
 def test_binaryDigit():
     i, load, output, clk = [Signal(bool(0)) for i in range(4)]
     rst = ResetSignal(0, active=1, isasync=True)
-    dut = binaryDigit(i, load, output, clk, rst)
+    bd_inst = binaryDigit(i, load, output, clk, rst)
 
     @always(delay(10))
     def clkgen():
@@ -182,7 +184,8 @@ def test_binaryDigit():
         assert output == 0
         load.next = 0
 
-    sim = Simulation(dut, [stimulus, clkgen])
+    sim = Simulation(bd_inst, [stimulus, clkgen])
+    traceSignals(bd_inst)
     sim.run(200)
 
 
@@ -212,4 +215,41 @@ def test_dff():
         clear.next = 0
 
     sim = Simulation(dff_inst, [stimulus, clkgen, cleargen])
+    traceSignals(dff_inst)
     sim.run(200)
+
+
+@pytest.mark.telemetry_files(source("seq.py"))
+def test_fifo():
+    dout, din = [Signal(modbv(0)[10:]) for i in range(2)]
+    we, re, empty, full, clk = [Signal(bool(0)) for i in range(5)]
+    rst = ResetSignal(0, active=1, isasync=True)
+    fifo_inst = fifo(dout, din, we, re, empty, full, clk, rst, 10, 10)
+
+    @always(delay(10))
+    def clkgen():
+        clk.next = not clk
+
+    @instance
+    def test():
+        we.next = 0
+        re.next = 0
+
+        yield delay(20)
+        din.next = 5
+        we.next = 1
+        yield delay(20)
+        din.next = 22
+        we.next = 0
+        yield delay(20)
+        we.next = 1
+        yield delay(20)
+        we.next = 0
+        yield delay(20)
+        re.next = 1
+        yield delay(20)
+        re.next = 0
+
+    sim = Simulation(fifo_inst, [clkgen, test])
+    traceSignals(fifo_inst)
+    sim.run(400)

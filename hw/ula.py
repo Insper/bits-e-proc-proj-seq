@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from myhdl import *
-from .components import *
+from components import *
 
 
 @block
